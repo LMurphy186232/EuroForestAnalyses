@@ -6,6 +6,7 @@
 # Lora Murphy, 5/20/2020
 ###############################################################################
 
+<<<<<<< HEAD
 
 library(likelihood)
 projdir <- "C:/Users/lora/Documents/SORTIE/PROJECTS/AustriaPoland"
@@ -41,17 +42,31 @@ norm_maxdist <- 250
 
 #-----------------------------------------------------------------------------#
 
+=======
+#----- Controls for the normalizer -------------------------------------------#
+# Width of rings, in whatever distance units we're using
+incr <- 0.25
+# Length of the entire disperse kernel, in whatever distance units
+maxdist <- 250
+>>>>>>> 1f0ce500311acd8bf5b6cdf63ff6b92c408c0113
 
 #-----------------------------------------------------------------------------#
 # Function for an isotropic lognormal normalizer.
 # Lognormal: exp(-0.5(ln(dist/X0)/Xb))
+<<<<<<< HEAD
 #
+=======
+>>>>>>> 1f0ce500311acd8bf5b6cdf63ff6b92c408c0113
 # The procedure is to divide a circle into a series of rings of constant width
 # (size of your choice). At the distance of the midpoint of each ring, the 
 # lognormal function is calculated, and the result multiplied by the area of 
 # the ring. The final result is the sum of these values across all rings.
 #-----------------------------------------------------------------------------#
+<<<<<<< HEAD
 lognormal_iso_normalizer <- function(X0, Xb) {
+=======
+lognormal_iso_normalizer <- function(incr, maxdist, X0, Xb) {
+>>>>>>> 1f0ce500311acd8bf5b6cdf63ff6b92c408c0113
   
   
   # Get the distances to each ring
@@ -85,6 +100,7 @@ lognormal_iso_normalizer <- function(X0, Xb) {
 
 # Weibull: exp((-D*dist^theta))
 # Arguments:
+<<<<<<< HEAD
 # norm_incr: width of the rings.
 # norm_maxdist: radius of circle = maximum possible disperse distance.
 # D, theta: parameters for weibull.
@@ -97,6 +113,20 @@ weibull_iso_normalizer <- function(D, theta) {
   
   # Get the midpoint of each ring - halfway between the increments
   mids <- dist - (norm_incr/2)
+=======
+# incr: width of the rings.
+# maxdist: radius of circle = maximum possible disperse distance.
+# D, theta: parameters for weibull.
+#-----------------------------------------------------------------------------#
+weibull_iso_normalizer <- function(incr, maxdist, D, theta) {
+  
+  
+  # Get the distances to each ring
+  dist <- seq(from=incr, to=maxdist, by=incr)
+  
+  # Get the midpoint of each ring - halfway between the increments
+  mids <- dist - (incr/2)
+>>>>>>> 1f0ce500311acd8bf5b6cdf63ff6b92c408c0113
   
   # Evaluate the weibull function at the midpoint of each increment
   es <- D * dist^theta
