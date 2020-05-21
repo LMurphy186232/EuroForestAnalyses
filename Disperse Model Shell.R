@@ -46,10 +46,10 @@ incr <- 0.25
 # Length of the entire disperse kernel, in whatever distance units
 maxdist <- 250
 
-
 #-----------------------------------------------------------------------------#
 # Function for an isotropic lognormal normalizer.
 # Lognormal: exp(-0.5(ln(dist/X0)/Xb))
+#
 # The procedure is to divide a circle into a series of rings of constant width
 # (size of your choice). At the distance of the midpoint of each ring, the 
 # lognormal function is calculated, and the result multiplied by the area of 
@@ -91,6 +91,7 @@ lognormal_iso_normalizer <- function(X0, Xb) {
 # D, theta: parameters for weibull.
 #-----------------------------------------------------------------------------#
 weibull_iso_normalizer <- function(D, theta) {
+  
   
   # Get the distances to each ring
   dist <- seq(from=norm_incr, to=norm_maxdist, by=norm_incr)
