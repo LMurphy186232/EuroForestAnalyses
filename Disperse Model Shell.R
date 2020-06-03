@@ -364,7 +364,7 @@ results<-anneal(model = lognormal_iso_model, par = par, var = var,
                 par_hi = par_hi, pdf = zinf_dnorm, 
                 dep_var = "seeds_m2", 
                 initial_temp = 3, temp_red = 0.9, max_iter = 100000)
-
+write_results(results, "results.txt")
 
 #-----------------------------------------------------------------------------#
 
