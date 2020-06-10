@@ -214,81 +214,12 @@ incr <- 0.25
 # Length of the entire disperse kernel, in whatever distance units
 maxdist <- 250
 
-#-----------------------------------------------------------------------------#
-# Function for an isotropic lognormal normalizer.
-# Lognormal: exp(-0.5(ln(dist/X0)/Xb))
-#
-# The procedure is to divide a circle into a series of rings of constant width
-# (size of your choice). At the distance of the midpoint of each ring, the 
-# lognormal function is calculated, and the result multiplied by the area of 
-# the ring. The final result is the sum of these values across all rings.
-#-----------------------------------------------------------------------------#
-lognormal_iso_normalizer <- function(X0, Xb) {
-
-  # Get the distances to each ring
-  dist <- seq(from=norm_incr, to=norm_maxdist, by=norm_incr)
-  
-  # Get the midpoint of each ring - halfway between the increments
-  mids <- dist - (norm_incr/2)
-  
-  # Evaluate the lognormal function at the midpoint of each increment
-  es <- 0.5 * (log(mids/X0)/Xb)^2
-  
-  # Avoid overflow for large values of the exponent
-  temp <- ifelse(es > 50, 0, exp(-es))
-  
-  # Convert to units^2 by calculating area of the ring for each increment
-  # To calculate the area of the ring, subtract the area of the circle
-  # of increment i-1 from the circle of increment i
-  temp = temp * pi * (dist^2 - (c(0, dist[1:(length(dist)-1)]))^2)
-  
-  # Sum it to get normalizer
-  sum(temp)
-  
-}
-#-----------------------------------------------------------------------------#
 
 
 
 
 
 
-#-----------------------------------------------------------------------------#
-# Function for an isotropic weibull normalizer.
-###############################
-# NOTE: Charlie had some extra terms in his Weibull that I don't understand.
-# They may be some sort of scaling thing. We'll have to get his input.
-###############################
-
-# Weibull: exp((-D*dist^theta))
-# Arguments:
-# D, theta: parameters for weibull.
-#-----------------------------------------------------------------------------#
-weibull_iso_normalizer <- function(D, theta) {
-  
-  
-  # Get the distances to each ring
-  dist <- seq(from=norm_incr, to=norm_maxdist, by=norm_incr)
-  
-  # Get the midpoint of each ring - halfway between the increments
-  mids <- dist - (norm_incr/2)
-
-  # Evaluate the weibull function at the midpoint of each increment
-  es <- D * dist^theta
-  
-  # Avoid overflow for large values of the exponent
-  temp <- ifelse(es > 50, 0, exp(-es))
-  
-  # Convert to units^2 by calculating area of the ring for each increment
-  # To calculate the area of the ring, subtract the area of the circle
-  # of increment i-1 from the circle of increment i
-  temp = temp * pi * (dist^2 - (c(0, dist[1:(length(dist)-1)]))^2)
-  
-  # Sum it to get normalizer
-  sum(temp)
- 
-}
-#-----------------------------------------------------------------------------#
 
 
 
@@ -345,6 +276,53 @@ weibull_iso_model <- function(TSP, alpha, D, theta) {
 
 
 
+#-----------------------------------------------------------------------------#
+# Weibull isotropic model
+#-----------------------------------------------------------------------------#
+weibull_iso_model <- function(TSP, alpha, D, theta) {
+  
+  # Calculate normalizer
+  norm <- weibull_iso_normalizer(D, theta)
+  
+  predicted <- rowSums(TSP/norm * (dbhs/30.0)^alpha *
+                         exp(-D*distances^theta), na.rm=T)
+  
+  
+  # Guard against underflows
+  ifelse(predicted == 0, 0.0000001, predicted)
+  
+}
+#-----------------------------------------------------------------------------#
+
+
+
+
+
+
+#-----------------------------------------------------------------------------#
+# Weibull isotropic model, minimum size fitted as parameter; add minsize to
+# par, par_lo, and par_hi
+#-----------------------------------------------------------------------------#
+weibull_iso_model_var_minsize <- function(TSP, alpha, D, theta, minsize) {
+  
+  # Calculate normalizer
+  norm <- weibull_iso_normalizer(D, theta)
+  
+  # Set everything below min size to NA
+  dbhtemp[[which(dbhs < minsize)] <- NA
+  
+  predicted <- rowSums(TSP/norm * (dbhtemp/30.0)^alpha *
+                         exp(-D*distances^theta), na.rm=T)
+  
+  
+  # Guard against underflows
+  ifelse(predicted == 0, 0.0000001, predicted)
+  
+}
+#-----------------------------------------------------------------------------#
+
+
+
 
 
 
@@ -362,6 +340,36 @@ windows()
 results<-anneal(model = lognormal_iso_model, par = par, var = var, 
                 source_data = seeds, par_lo = par_lo,
                 par_hi = par_hi, pdf = zinf_dnorm, 
+                dep_var = "seeds_m2", 
+                initial_temp = 3, temp_red = 0.9, max_iter = 100000)
+write_results(results, "results.txt")
+
+#-----------------------------------------------------------------------------#
+
+
+
+
+
+
+#-----------------------------------------------------------------------------#
+# Setting up multiple values per variable: in this case, a zero probability
+# for each year
+#-----------------------------------------------------------------------------#
+seeds$yr <- as.factor(seeds$year)
+num_years <- length(levels(seeds$yr))
+
+par    <- list(TSP = 600,  alpha = 2,     X0 = 15,     Xb = 0.5, zprob = rep(0.5, num_years), sd = 2)
+par_lo <- list(TSP = 0,    alpha = 0.001, X0 = 0.0001, Xb = 0.5, zprob = rep(0,   num_years), sd = 0.2)
+par_hi <- list(TSP = 5000, alpha = 4,     X0 = 100,    Xb = 20,  zprob = rep(1,   num_years),   sd = 1000)
+
+# Add some names so 
+names(par$zprob) <- paste0("zprob", as.character(levels(seeds$yr)))
+var <- list(mean = "predicted")
+
+windows()
+results<-anneal(model = lognormal_iso_model, par = par, var = var, 
+                source_data = seeds, par_lo = par_lo,
+                par_hi = par_hi, pdf = zinf_dnorm_v_yr, 
                 dep_var = "seeds_m2", 
                 initial_temp = 3, temp_red = 0.9, max_iter = 100000)
 write_results(results, "results.txt")
